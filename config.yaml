@@ -1,0 +1,114 @@
+# DF-MYZEL-EVENT-BUS Configuration [CRUX-MK]
+# Welle-45-C-RETRY: Event-Bus fuer 7 Myzel-Schichten
+
+df_id: DF-MYZEL-EVENT-BUS
+df_name: myzel-event-bus
+version: 0.1.0-PHASE-1
+status: PHASE-1-PRODUCTION
+crux-mk: true
+
+description: |
+  In-Memory Event-Bus mit publish/subscribe Pattern + Meta-Prompting-Router
+  + Append-only Event-State-Tracker. Orientiert an SAE-v8 MYZ-30/32/36.
+  7 Myzel-Schichten (L1_BUS..L7_META).
+
+sae_v8_compliance:
+  h_max: 3.32
+  q_scale_integral: 11.11
+  f_cum_decay: 0.98
+  myzel_layers_count: 7
+  dual_import_safe: true
+
+tier_2_check:
+  lambda_per_month_estimate: 30    # 1x/Tag
+  narrow_scope: "Event-Bus + Mock-Router, deterministisch, kein LLM"
+  determinism: 1.0
+  rollback_seconds: 5
+  test_coverage_target: 0.90
+  k0_protected: true
+  q0_measurable: true
+  escalation_after_n_fails: 2
+  rho_budget_eur_day: 0
+  audit_trail: branch-hub/audit/df-myzel-event-bus.jsonl
+
+k11_cascade_containment:
+  cascade_isolation: hard
+  failure_blast_radius: 1
+  dependency_dlq_strategy: "handler-exception isoliert pro Subscriber (LC4)"
+
+k12_distillation_resistenz:
+  output_feeds_into_training: false
+  provenance_required_in_output: true
+  non_llm_validation_layer: deterministic_router_table
+
+k13_independent_ground_truth:
+  external_anchor_type: github_filesystem
+  external_anchor_validation_frequency: "pro-Run"
+  pre_action_domain_check:
+    env_tag: "dev/staging/prod"
+    mount_point: "local-only"
+    network_region: "in-memory"
+  pre_action_backup_check:
+    backup_status: "branch-hub Git-Mirror"
+    replication_lag: "n/a"
+  pre_action_blast_radius_check:
+    blast_radius: "in_memory_bus + jsonl_append"
+    reversibility_class: "state_only"
+
+k14_human_override_decay:
+  override_complexity: single_command
+  override_documentation_freshness_days: 30
+  martin_review_cadence: monthly
+  bus_factor_handover_drilled: false
+
+k15_entropy_budget:
+  entropy_added_loc_estimate: 320
+  entropy_added_concepts:
+    - EventBus
+    - MetaPromptingRouter
+    - EventStateTracker
+    - AdapterOrchestrator
+  entropy_justified_by_rho: "70k_eur_per_year (Event-Bus Replikat fuer SAE-v8 Integration)"
+  entropy_subtractive_potential: "ersetzt Ad-hoc-Event-Handling"
+
+k16_concurrent_spawn_mutex:
+  concurrent_spawn_protection: both
+  lock_dir: /tmp/df-myzel-event-bus.lock
+  lock_stale_age_h: 6
+  engine_pgrep_check: true
+  lock_release_on: EXIT_INT_TERM
+
+k11b_pipeline_cost_estimate:
+  pipeline_cost_estimate_required: false
+  cost_estimate_method: static_pre_run
+  quota_budget_ceiling: 0
+  cost_overrun_action: warn
+
+lose_coupling:
+  LC1_graceful_degradation:
+    degradation_modes:
+      - full              # alle 7 Layer
+      - degraded_5_layer  # ohne META + OBSERVE
+      - degraded_3_layer  # nur BUS + DISPATCH + STATE
+      - standalone        # nur BUS
+    degradation_test_required: true
+  LC2_direct_mode:
+    direct_mode_available: true
+    direct_mode_capability: 1.0
+    direct_mode_trigger: "always (in-memory)"
+  LC3_circuit_breaker:
+    circuit_breaker_timeout_s: 10
+    circuit_breaker_open_threshold: 3
+    circuit_breaker_half_open_test_interval_s: 300
+  LC4_failure_isolation:
+    state_externalization: true
+    idempotent_operations: true
+    dependency_dlq_separate: true
+  LC5_health_check:
+    health_check_dependencies: []
+    health_check_degraded_score: 0.7
+    health_check_endpoint_or_file: "/tmp/df-myzel-event-bus-health.json"
+
+paths:
+  output_dir: "branch-hub/audit"
+  audit_log: "branch-hub/audit/df-myzel-event-bus.jsonl"

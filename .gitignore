@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+runs/
+output/
+learnings/
+STOP.flag
+.env
+.venv/
+secrets/
