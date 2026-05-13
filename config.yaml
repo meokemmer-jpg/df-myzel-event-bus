@@ -40,10 +40,14 @@ k12_distillation_resistenz:
   output_feeds_into_training: false
   provenance_required_in_output: true
   non_llm_validation_layer: deterministic_router_table
+  envelope_schema: full_provenance_envelope_v1.0   # W49-D K12
+  hmac_secret_env_var: DF_MYZEL_HMAC_SECRET
+  envelope_ttl_seconds: 86400
 
 k13_independent_ground_truth:
-  external_anchor_type: github_filesystem
-  external_anchor_validation_frequency: "pro-Run"
+  external_anchor_type: rfc3161                    # W49-D K13 (was: github_filesystem)
+  external_anchor_provider: freetsa
+  external_anchor_validation_frequency: "pro-Run (RFC3161 Trusted-Time-Stamp)"
   pre_action_domain_check:
     env_tag: "dev/staging/prod"
     mount_point: "local-only"
@@ -77,6 +81,7 @@ k16_concurrent_spawn_mutex:
   lock_stale_age_h: 6
   engine_pgrep_check: true
   lock_release_on: EXIT_INT_TERM
+  lock_implementation: atomic_lock                 # W49-D K16 reference
 
 k11b_pipeline_cost_estimate:
   pipeline_cost_estimate_required: false

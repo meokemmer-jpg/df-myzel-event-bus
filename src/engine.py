@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import sqlite3
+import sys as _sys
 import threading
 import time
 import uuid
@@ -32,6 +34,23 @@ from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
+
+# W49-D K12+K13 Foundation
+_DF_ROOT = Path(__file__).resolve().parent.parent.parent
+_sys.path.insert(0, str(_DF_ROOT))
+try:
+    from _df_common.full_provenance_envelope import build_full_envelope  # type: ignore
+    from _df_common.rfc3161_anchor import rfc3161_timestamp  # type: ignore
+    W49D_FOUNDATION = True
+except ImportError:
+    W49D_FOUNDATION = False
+
+_K12_HMAC_SECRET = os.environ.get(
+    "DF_MYZEL_HMAC_SECRET", "df-myzel-event-bus-dev-hmac-secret-v1"
+)
+_K12_ENVELOPE_TTL_S = int(os.environ.get("DF_MYZEL_ENVELOPE_TTL_S", "86400"))
+
+_logger = logging.getLogger(__name__)
 
 
 # 7 Myzel-Schichten (per SAE-v8 Myzel-Doktrin)
@@ -526,7 +545,51 @@ def run_myzel_audit(
         for event in events_input or []:
             orchestrator.process(event)
         result = orchestrator.audit()
-        logger.log({"event": "myzel-audit-complete", "result": asdict(result)})
+        run_id = f"myzel-{datetime.now(tz=timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+        logger.log({"event": "myzel-audit-complete", "run_id": run_id, "result": asdict(result)})
+
+        # W49-D K12: FullProvenanceEnvelope
+        chain_hash_for_anchor: str | None = None
+        if W49D_FOUNDATION:
+            try:
+                provenance_full_dir = audit_log_path.parent / "provenance-full"
+                provenance_full_dir.mkdir(parents=True, exist_ok=True)
+                predecessor_hash: str | None = None
+                files = sorted(provenance_full_dir.glob("*.envelope.json"), key=lambda p: p.stat().st_mtime)
+                if files:
+                    try:
+                        with files[-1].open("r", encoding="utf-8") as f:
+                            predecessor_hash = json.load(f).get("payload_hash")
+                    except (OSError, json.JSONDecodeError) as e:
+                        _logger.warning(f"K12 predecessor read failed: {e}")
+                envelope = build_full_envelope(
+                    operation_id=run_id,
+                    operation_type="df-myzel-event-bus-audit",
+                    issuer="df-myzel-event-bus",
+                    payload_dict=asdict(result),
+                    secret=_K12_HMAC_SECRET,
+                    predecessor_hash=predecessor_hash,
+                    tenant_id="myzel-aggregate",
+                    ttl_seconds=_K12_ENVELOPE_TTL_S,
+                )
+                env_out = provenance_full_dir / f"{run_id}.envelope.json"
+                with env_out.open("w", encoding="utf-8") as f:
+                    json.dump(asdict(envelope), f, indent=2, default=str, ensure_ascii=False)
+                chain_hash_for_anchor = envelope.payload_hash
+            except Exception as e:
+                _logger.warning(f"K12 FullProvenanceEnvelope build failed (non-fatal): {e}")
+
+        # W49-D K13: RFC3161 External-Anchor
+        if W49D_FOUNDATION and chain_hash_for_anchor:
+            try:
+                rfc_anchor = rfc3161_timestamp(chain_hash_for_anchor, provider="freetsa")
+                anchors_dir = audit_log_path.parent / "anchors"
+                anchors_dir.mkdir(parents=True, exist_ok=True)
+                with (anchors_dir / "rfc3161-anchors.jsonl").open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(asdict(rfc_anchor)) + "\n")
+            except Exception as e:
+                _logger.warning(f"K13 RFC3161 anchor failed (non-fatal): {e}")
+
         return result
     finally:
         mutex.release()
