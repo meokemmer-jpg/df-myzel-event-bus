@@ -12,6 +12,27 @@ description: |
   + Append-only Event-State-Tracker. Orientiert an SAE-v8 MYZ-30/32/36.
   7 Myzel-Schichten (L1_BUS..L7_META).
 
+# === Default-Action (Welle-51 Batch-5 Migration, per Schicht-2 v1.2) ===
+# Migration-Welle: Welle-51 Batch-5
+default_action:
+  description: "In-Memory Event-Bus mit Pub/Sub-Routing ueber 7 Myzel-Schichten (L1_BUS..L7_META) + Append-only Event-State-Tracker + HMAC-Provenance-Envelope"
+  rho_per_run_eur: 80
+  rho_validation_source: unvalidated
+  block_gates:
+    - gate_id: K11
+      block_reason: "Handler-Exception cascading auf andere Subscriber (LC4-Verletzung) ODER Layer-Boundary verletzt"
+      false_block_cost_eur: 30
+      legitimate_block_condition: "Subscriber-Crash der andere Subscriber blockiert ODER L7_META-Layer-Pollution"
+    - gate_id: K12
+      block_reason: "Provenance-Envelope (HMAC + chain-predecessor) failed Validation ODER TTL > 86400s"
+      false_block_cost_eur: 25
+      legitimate_block_condition: "HMAC-Secret missing ODER Event-Chain Predecessor-Hash mismatch ODER Envelope-Replay > TTL"
+    - gate_id: K16
+      block_reason: "Concurrent-Spawn-Mutex verletzt (mehrere Bus-Instanzen auf gleicher OUT_DIR)"
+      false_block_cost_eur: 35
+      legitimate_block_condition: "Lock-Dir bereits existiert + Stale-Age < 6h ODER pgrep findet 2+ Engine-Instances"
+  graceful_degradation_path: "degraded_no_meta_router (L7_META skipped, nur L1_BUS-L6) ODER standalone (nur L1_BUS in-memory ohne Router)"
+
 sae_v8_compliance:
   h_max: 3.32
   q_scale_integral: 11.11
