@@ -1,0 +1,10 @@
+{
+  "df_name": "df-myzel-event-bus",
+  "parent": "backfill-root",
+  "generation": 0,
+  "born_at": "2026-05-18T11:10:45.030683+00:00",
+  "mutation_path": [],
+  "status": "alive",
+  "deaths": [],
+  "revivals": []
+}
