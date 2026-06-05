@@ -9,3 +9,11 @@ STOP.flag
 .env
 .venv/
 secrets/
+*.env
+*.db
+*.sqlite
+*.sqlite3
+*.key
+*.pem
+secrets.json
+credentials.json
