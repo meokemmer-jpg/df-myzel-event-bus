@@ -1,0 +1,12 @@
+{
+  "df": "df-myzel-event-bus",
+  "ts": "2026-06-08T19:53:47.373577+00:00",
+  "has_src": true,
+  "parse_ok": true,
+  "has_tests": true,
+  "test_ran": true,
+  "tests_passed": true,
+  "code_hash": "df73466798c70887",
+  "python": "3.14.4",
+  "crux": "[CRUX-MK]"
+}
