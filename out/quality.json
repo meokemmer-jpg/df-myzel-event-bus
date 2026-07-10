@@ -1,9 +1,9 @@
 {
   "df": "df-myzel-event-bus",
-  "ts": "2026-07-09T02:59:06.737002+00:00",
+  "ts": "2026-07-10T01:04:55.780656+00:00",
   "maturity": "TESTED",
   "maturity_level": 4,
   "evidence_grade": 4,
-  "wargame_verdict": "CONDITIONAL",
+  "wargame_verdict": null,
   "crux": "[CRUX-MK]"
 }
