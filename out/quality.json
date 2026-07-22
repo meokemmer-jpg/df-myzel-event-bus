@@ -1,9 +1,10 @@
 {
   "df": "df-myzel-event-bus",
-  "ts": "2026-07-20T03:55:31.908020+00:00",
-  "maturity": "TESTED",
-  "maturity_level": 4,
-  "evidence_grade": 4,
+  "ts": "2026-07-21T03:55:54.364638+00:00",
+  "maturity": "CODE",
+  "maturity_level": 3,
+  "evidence_grade": 2,
+  "grade_basis": "pytest-gruen (LLM-selbstgeschrieben), codex_verify=UNKNOWN -> max Grade-2 (CODE), nie TESTED/4",
   "wargame_verdict": "CONDITIONAL",
   "crux": "[CRUX-MK]"
 }
